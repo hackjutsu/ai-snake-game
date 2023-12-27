@@ -8,7 +8,6 @@ conda activate pygame_env
 conda deactivate # to deactivate
 ```
 
-Install Pytorch from 
-Install Pytorch from 
+Install Pytorch from https://pytorch.org/
 
 Download the python snake game from [here](https://github.com/patrickloeber/python-fun/tree/master/snake-pygame).
