@@ -11,6 +11,7 @@ import os
 MAX_MEMORY = 100_000 # to store 100_000 in the memory/deque
 BATCH_SIZE = 1000
 LR = 0.001 # learning rate
+EPSILON_MIN = 10
 
 class Agent:
 
@@ -85,7 +86,7 @@ class Agent:
 
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
+        self.epsilon = max(EPSILON_MIN, 80 - self.n_games)
         final_move = [0,0,0]
         if random.randint(0, 200) < self.epsilon:
             move = random.randint(0, 2)
@@ -108,7 +109,9 @@ def train():
     # load the pre-trained model if available
     parser = argparse.ArgumentParser(description='AI Snake Game')
     parser.add_argument('--model', type=str, help='Path to the pre-trained model')
+    parser.add_argument('--no-train', action='store_true', help='Use pre-trained model without further training')
     args = parser.parse_args()
+    
     if args.model:
         if os.path.exists(args.model):
             print(f"Loading model from {args.model}")
@@ -119,40 +122,52 @@ def train():
 
 
     game = SnakeGameAI()
-    while True:
-        # get old state
-        state_old = agent.get_state(game)
 
-        # get move
-        final_move = agent.get_action(state_old)
+    if not args.no_train:
+        print("Running the game with continuous training.")
+        while True:
+            # get old state
+            state_old = agent.get_state(game)
 
-        # perform move and get new state
-        reward, done, score = game.play_step(final_move)
-        state_new = agent.get_state(game)
+            # get move
+            final_move = agent.get_action(state_old)
 
-        # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+            # perform move and get new state
+            reward, done, score = game.play_step(final_move)
+            state_new = agent.get_state(game)
 
-        # remember
-        agent.remember(state_old, final_move, reward, state_new, done)
+            # train short memory
+            agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
-        if done:
-            # train long memory, plot result
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory()
+            # remember
+            agent.remember(state_old, final_move, reward, state_new, done)
 
-            if score > record:
-                record = score
-                agent.model.save()
+            if done:
+                # train long memory, plot result
+                game.reset()
+                agent.n_games += 1
+                agent.train_long_memory()
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record)
+                if score > record:
+                    record = score
+                    agent.model.save()
 
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
+                print('Game', agent.n_games, 'Score', score, 'Record:', record)
+
+                plot_scores.append(score)
+                total_score += score
+                mean_score = total_score / agent.n_games
+                plot_mean_scores.append(mean_score)
+                plot(plot_scores, plot_mean_scores)
+    else:
+       print("Running the game with pre-trained model without further training.")
+       while True:
+           state_old = agent.get_state(game)
+           final_move = agent.get_action(state_old)
+           reward, done, score = game.play_step(final_move)
+           if done:
+               game.reset()
+               print('Game', agent.n_games, 'Score', score)
 
 
 if __name__ == '__main__':
