@@ -70,7 +70,7 @@ class Agent:
         self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEMORY is reached
 
     def train_long_memory(self):
-        if len(self.memory) < BATCH_SIZE:
+        if len(self.memory) > BATCH_SIZE:
             mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
         else:
             mini_sample = self.memory
@@ -93,6 +93,8 @@ class Agent:
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
+
+        return final_move
 
 def train():
     plot_scores = []
@@ -119,7 +121,7 @@ def train():
         agent.remember(state_old, final_move, reward, state_new, done)
 
         if done:
-            # train long memory, plot the result
+            # train long memory, plot result
             game.reset()
             agent.n_games += 1
             agent.train_long_memory()
@@ -128,12 +130,11 @@ def train():
                 record = score
                 agent.model.save()
 
-            print('Game', agent.n_games, 'Score', score, 'Record', record)
+            print('Game', agent.n_games, 'Score', score, 'Record:', record)
 
-            # plot
             plot_scores.append(score)
             total_score += score
-            mean_score =  total_score / agent.n_games
+            mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
 
