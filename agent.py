@@ -1,3 +1,4 @@
+import argparse
 import torch
 import random
 import numpy as np
@@ -5,6 +6,7 @@ from collections import deque
 from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, QTrainer
 from helper import plot
+import os
 
 MAX_MEMORY = 100_000 # to store 100_000 in the memory/deque
 BATCH_SIZE = 1000
@@ -102,6 +104,20 @@ def train():
     total_score = 0
     record = 0
     agent = Agent()
+
+    # load the pre-trained model if available
+    parser = argparse.ArgumentParser(description='AI Snake Game')
+    parser.add_argument('--model', type=str, help='Path to the pre-trained model')
+    args = parser.parse_args()
+    if args.model:
+        if os.path.exists(args.model):
+            print(f"Loading model from {args.model}")
+            agent.model.load_state_dict(torch.load(args.model))
+            agent.model.eval()
+        else:
+            print(f"No model found at {args.model}. Starting training from scratch.")
+
+
     game = SnakeGameAI()
     while True:
         # get old state
