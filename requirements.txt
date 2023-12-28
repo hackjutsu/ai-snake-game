@@ -1,5 +1,6 @@
 # for snake game
 pygame==2.5.2
+numpy==1.26.2
 
 # for pytorch
 torch==2.1.2
