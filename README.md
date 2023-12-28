@@ -1,5 +1,10 @@
 # AI SNAKE GAME
 
+![](./images/ai-snake-game.png)
+
+![](./images/ai-snake-game.gif)
+
+
 Activate conda.
 ```bash
 conda init zsh # or `conda init bash`
