@@ -16,12 +16,13 @@ class Linear_QNet(nn.Module):
         return x
 
     def save(self, file_name='model.pth'):
-        model_foler_path = './model'
-        if not os.path.exists(model_foler_path):
-            os.makedirs(model_foler_path)
+        model_folder_path = './model'
+        if not os.path.exists(model_folder_path):
+            os.makedirs(model_folder_path)
 
-        file_name = os.path.join(model_foler_path, file_name)
-        torch.save(self.state_dirct(), file_name)
+        file_name = os.path.join(model_folder_path, file_name)
+        torch.save(self.state_dict(), file_name)
+
 
 class QTrainer:
     def __init__(self, model, lr, gamma):
@@ -36,6 +37,7 @@ class QTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
+        # (n, x)
 
         if len(state.shape) == 1:
             # (1, x)
@@ -48,7 +50,6 @@ class QTrainer:
         # 1: predicted Q values with current state
         pred = self.model(state)
 
-        # 2: r + y * max(next_predicted Q value) --> only do this if not done
         target = pred.clone()
         for idx in range(len(done)):
             Q_new = reward[idx]
@@ -57,6 +58,9 @@ class QTrainer:
 
             target[idx][torch.argmax(action[idx]).item()] = Q_new
 
+        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
+        # pred.clone()
+        # preds[argmax(action)] = Q_new
         self.optimizer.zero_grad()
         loss = self.criterion(target, pred)
         loss.backward()
