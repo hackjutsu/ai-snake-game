@@ -11,7 +11,7 @@ import os
 MAX_MEMORY = 100_000 # to store 100_000 in the memory/deque
 BATCH_SIZE = 1000
 LR = 0.001 # learning rate
-EPSILON_MIN = 10
+EPSILON_MIN = 0
 
 class Agent:
 
