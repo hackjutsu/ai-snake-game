@@ -37,8 +37,11 @@ class QTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
-        # (n, x)
 
+        # Check for single or batch input.
+        # If the input is a single experience (the shape of state is 1D), it is reshaped to 
+        # 2D (a batch with one item). This ensures compatibility with the model, which is 
+        # designed to handle batch inputs.
         if len(state.shape) == 1:
             # (1, x)
             state = torch.unsqueeze(state, 0)
@@ -50,6 +53,7 @@ class QTrainer:
         # 1: predicted Q values with current state
         pred = self.model(state)
 
+        # 2. Q_new = r + y * max(next_predicted Q value) -> only do this if not done
         target = pred.clone()
         for idx in range(len(done)):
             Q_new = reward[idx]
@@ -57,12 +61,19 @@ class QTrainer:
                 Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
 
             target[idx][torch.argmax(action[idx]).item()] = Q_new
+        # The target Q-values are based on the Bellman equation and represent the optimal 
+        # Q-values as per the current understanding of the network, considering the reward received and the potential future rewards.    
 
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
+        # 3. Reset gradients
         self.optimizer.zero_grad()
+
+        # 4. Compute loss
+        # pred: represents the Q-values predicted by the neural network for the current state.
+        # target: represents the Q-values that the model should ideally have predicted – the "target" or "goal" for the neural network to achieve. 
         loss = self.criterion(target, pred)
         loss.backward()
 
+        # 5. Optimize the model
+        # The optimizer updates the weights of the model based on the computed gradients. 
+        # This step is where the learning happens.
         self.optimizer.step()
